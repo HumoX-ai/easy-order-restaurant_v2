@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 
 export interface Restaurant {
@@ -13,22 +14,25 @@ export interface Restaurant {
   owner: number;
 }
 
-interface Menu {
+export interface Menu {
   id: number;
   name: string;
   items: MenuItem[];
+  is_active: boolean;
+  restaurant: number;
 }
 
 export interface MenuItem {
-  id: number;
+  id?: number;
+  menu: number;
   name: string;
   description: string;
-  image: string;
   price: string;
-  stock: number;
   status: "active" | "archived";
+  stock: number;
+  restaurant: number;
+  image?: File;
 }
-
 export interface Order {
   id: number;
   restaurant: number;

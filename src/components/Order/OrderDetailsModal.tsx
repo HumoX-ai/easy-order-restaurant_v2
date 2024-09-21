@@ -40,19 +40,27 @@ export function OrderDetailsModal({
   const [status, setStatus] = useState(order.status);
   const [user, setUser] = useState<UserInfo | null>();
   const [product, setProduct] = useState<MenuItem | null>();
+  const [isLoading, setIsLoading] = useState(false);
   const loading = useAppSelector((state) => state.orders.loading);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await getUsersById(order.customer);
-      const product = await getProductById(order.product);
-      setProduct(product);
-      setUser(user);
+      try {
+        setIsLoading(true);
+        const user = await getUsersById(order.customer);
+        const product = await getProductById(order.product);
+        setUser(user);
+        setProduct(product);
+      } catch (error) {
+        dispatch(setError("Xatolik yuz berdi"));
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchUser();
-  }, [order.customer, order.product]);
+  }, [order.customer, order.product, dispatch]);
 
   const handleUpdateOrderStatus = async (
     orderId: number,
@@ -88,52 +96,62 @@ export function OrderDetailsModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#1e1c1c]">
-        <DialogHeader>
-          <DialogTitle>Buyurtma #{order.id} tafsilotlari</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div>
-            <p>
-              <strong>Buyurtmachi:</strong> {user?.name}
-            </p>
-            <p>
-              <strong>Telefon raqam:</strong> {user?.phone}
-            </p>
-            <p>
-              <strong>Taom nomi:</strong> {product?.name} - {order.quantity} ta
-            </p>
-            <p>
-              <strong>Sana:</strong>{" "}
-              {new Date(order.created_at).toLocaleString()}
-            </p>
-            <p>
-              <strong>Umumiy qiymat:</strong>{" "}
-              {order.total_price
-                .toFixed(0)
-                .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
-              so&#39;m
-            </p>
-          </div>
-          <div>
-            <label htmlFor="status" className="text-sm font-medium">
-              Status:
-            </label>
-            <Select onValueChange={handleStatusChange} defaultValue={status}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Statusni tanlang" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Pending">Kutilmoqda</SelectItem>
-                <SelectItem value="Processing">Jarayonda</SelectItem>
-                <SelectItem value="Shipped">Yuborildi</SelectItem>
-                <SelectItem value="Delivered">Yetkazildi</SelectItem>
-                <SelectItem value="Canceled">Bekor qilindi</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {loading && <p className="text-gray-500">Yuklanmoqda...</p>}{" "}
-          {/* Yuklanmoqda holatini ko'rsatish */}
-        </div>
+        {isLoading ? (
+          <div>Yuklanmoqda...</div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Buyurtma #{order.id} tafsilotlari</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div>
+                <p>
+                  <strong>Buyurtmachi:</strong> {user?.name}
+                </p>
+                <p>
+                  <strong>Telefon raqam:</strong> {user?.phone}
+                </p>
+                <p>
+                  <strong>Taom nomi:</strong> {product?.name} - {order.quantity}{" "}
+                  ta
+                </p>
+                <p>
+                  <strong>Sana:</strong>{" "}
+                  {new Date(order.created_at).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Umumiy qiymat:</strong>{" "}
+                  {order.total_price
+                    .toFixed(0)
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                  so&#39;m
+                </p>
+              </div>
+              <div>
+                <label htmlFor="status" className="text-sm font-medium">
+                  Status:
+                </label>
+                <Select
+                  onValueChange={handleStatusChange}
+                  defaultValue={status}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Statusni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Kutilmoqda</SelectItem>
+                    <SelectItem value="Processing">Jarayonda</SelectItem>
+                    <SelectItem value="Shipped">Yuborildi</SelectItem>
+                    <SelectItem value="Completed">Tayyor</SelectItem>
+                    <SelectItem value="Canceled">Bekor qilindi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {loading && <p className="text-gray-500">Yuklanmoqda...</p>}{" "}
+              {/* Yuklanmoqda holatini ko'rsatish */}
+            </div>
+          </>
+        )}
 
         <Button onClick={onClose}>Yopish</Button>
       </DialogContent>
