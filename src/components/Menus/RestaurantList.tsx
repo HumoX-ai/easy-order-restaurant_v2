@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -12,32 +12,33 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MapPin } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-
-interface Restaurant {
-  id: number;
-  name: string;
-  image: string;
-  description: string;
-  address: string;
-  contact_phone: string;
-  contact_email: string;
-  status: "active" | "archived";
-}
+import RestaurantUpdateModal from "./RestaurantUpdateModal";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { setRestaurants } from "@/store/restaurantSlice";
+import Link from "next/link";
+import { Restaurant } from "@/lib/data";
 
 interface RestaurantsListProps {
-  restaurants: Restaurant[];
+  initialRestaurants: Restaurant[];
 }
 
-const RestaurantsList: React.FC<RestaurantsListProps> = ({ restaurants }) => {
-  const route = useRouter();
+const RestaurantsList: React.FC<RestaurantsListProps> = ({
+  initialRestaurants,
+}) => {
+  const dispatch = useAppDispatch();
 
-  if (restaurants.length === 0) {
+  useEffect(() => {
+    dispatch(setRestaurants(initialRestaurants));
+  }, [dispatch, initialRestaurants]);
+
+  const newRestaurants = useAppSelector(
+    (state) => state.restaurant.restaurants
+  );
+
+  if (initialRestaurants.length === 0) {
     return (
       <div className="container mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-6">
-          Mening Restoranlarim
-        </h1>
+        <h1 className="text-3xl font-bold mb-6">Mening Restoranlarim</h1>
         <p className="text-center">Mening restoranlarim mavjud emas</p>
       </div>
     );
@@ -45,12 +46,10 @@ const RestaurantsList: React.FC<RestaurantsListProps> = ({ restaurants }) => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 ">
-        Mening Restoranlarim
-      </h1>
+      <h1 className="text-3xl font-bold mb-6 ">Mening Restoranlarim</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {restaurants &&
-          restaurants?.map((restaurant) => (
+        {newRestaurants &&
+          newRestaurants?.map((restaurant) => (
             <Card
               key={restaurant.id}
               className="overflow-hidden h-full flex flex-col"
@@ -90,15 +89,10 @@ const RestaurantsList: React.FC<RestaurantsListProps> = ({ restaurants }) => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between items-end mt-auto">
-                <Button
-                  variant="link"
-                  onClick={() =>
-                    route.push(`/dashboard/menus/${restaurant.id}`)
-                  }
-                >
-                  Menyular
-                </Button>
-                <Button>Tahrirlash</Button>
+                <Link href={`/dashboard/menus/${restaurant.id}`}>
+                  <Button variant="link">Menyular</Button>
+                </Link>
+                <RestaurantUpdateModal restaurant={restaurant} />
               </CardFooter>
             </Card>
           ))}

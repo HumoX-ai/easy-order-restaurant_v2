@@ -8,5 +8,5 @@ export default async function Menus() {
   const myId = await getMyProfileId(token);
   const myRestaurants = (await getMyRestaurants(myId as number)) || [];
 
-  return <RestaurantsList restaurants={myRestaurants} />;
+  return <RestaurantsList initialRestaurants={myRestaurants} />;
 }

@@ -63,8 +63,17 @@ export default function MenuList({ initialMenu }: MenuListProps) {
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
-        if (key === "image" && value instanceof File) {
-          formData.append(key, value);
+        if (key === "image") {
+          if (value instanceof File) {
+            formData.append(key, value);
+          } else if (
+            typeof value === "string" &&
+            value !== editingItem?.image
+          ) {
+            // Agar value string bo'lsa va original qiymatdan farq qilsa, qo'shamiz
+            formData.append(key, value);
+          }
+          // Aks holda, image o'zgartirilmagan va uni qo'shmaymiz
         } else {
           formData.append(key, String(value));
         }
@@ -96,10 +105,9 @@ export default function MenuList({ initialMenu }: MenuListProps) {
     } catch (error) {
       dispatch(setLoading(false));
       console.error("Error submitting menu item:", error);
-      // Handle error (e.g., show error message to user)
+      // Xatoni boshqarish (masalan, foydalanuvchiga xato xabarini ko'rsatish)
     }
   };
-
   if (menu.length === 0) {
     return <p className="text-center">Menyu mavjud emas</p>;
   }

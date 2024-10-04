@@ -2,7 +2,7 @@
 import axios from "axios";
 
 export interface Restaurant {
-  uuid: string;
+  uuid?: string;
   id: number;
   name: string;
   image: string;
@@ -11,7 +11,7 @@ export interface Restaurant {
   contact_phone: string;
   contact_email: string;
   status: "active" | "archived";
-  owner: number;
+  owner?: number;
 }
 
 export interface Menu {
@@ -31,7 +31,7 @@ export interface MenuItem {
   status: "active" | "archived";
   stock: number;
   restaurant: number;
-  image?: File;
+  image?: string | File;
 }
 export interface Order {
   id: number;

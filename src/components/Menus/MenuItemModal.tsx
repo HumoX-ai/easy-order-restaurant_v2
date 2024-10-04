@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,6 +30,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { createFormSchema, updateFormSchema } from "./schema";
+import axios from "axios";
+import { Menu, MenuItem } from "@/lib/data";
 
 type FormData = z.infer<typeof updateFormSchema>;
 
@@ -38,7 +40,7 @@ interface MenuItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: FormData) => Promise<void>;
-  initialData?: Partial<FormData> | null;
+  initialData?: MenuItem | null;
   menuId: number | null;
   restaurantId: number | null;
 }
@@ -52,7 +54,7 @@ export default function MenuItemModal({
   menuId,
   restaurantId,
 }: MenuItemModalProps) {
-  console.log("initialData", menuId, restaurantId);
+  const [menus, setMenus] = useState<Menu[] | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(initialData ? updateFormSchema : createFormSchema),
@@ -62,6 +64,7 @@ export default function MenuItemModal({
       price: "",
       status: "active",
       stock: 0,
+      image: "",
       menu: menuId ?? undefined,
       restaurant: restaurantId ?? undefined,
     },
@@ -91,6 +94,26 @@ export default function MenuItemModal({
       });
     }
   };
+
+  useEffect(() => {
+    const fetchMenus = async () => {
+      try {
+        const res = await axios.get<Menu[]>(
+          `${process.env.NEXT_PUBLIC_HOST}/products/restaurants/${restaurantId}/menus/`
+        );
+
+        setMenus(res.data);
+        console.log("menus", res.data);
+
+        return res.data;
+      } catch (error) {
+        console.log("error", error);
+        return null;
+      }
+    };
+
+    fetchMenus();
+  }, [restaurantId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -136,7 +159,7 @@ export default function MenuItemModal({
             <FormField
               control={form.control}
               name="image"
-              render={({ field }) => (
+              render={({ field: { onChange, value, ...rest } }) => (
                 <FormItem>
                   <FormLabel>Rasm yuklash</FormLabel>
                   <FormControl>
@@ -145,13 +168,16 @@ export default function MenuItemModal({
                       accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        field.onChange(file || undefined);
+                        if (file) {
+                          onChange(file);
+                        }
                       }}
+                      {...rest}
                     />
                   </FormControl>
-                  {typeof field.value === "string" && (
+                  {typeof value === "string" && value && (
                     <p className="text-sm text-gray-500 break-words">
-                      Joriy rasm: {field.value.split("/").pop()}
+                      Joriy rasm: {value.split("/").pop()}
                     </p>
                   )}
                   <FormMessage />
@@ -213,10 +239,24 @@ export default function MenuItemModal({
               name="menu"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Menyu ID</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" />
-                  </FormControl>
+                  <FormLabel>Menyular</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Menyu tanlang" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {menus?.map((menu) => (
+                        <SelectItem key={menu.id} value={menu.id.toString()}>
+                          {menu.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
